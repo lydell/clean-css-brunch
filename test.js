@@ -23,7 +23,7 @@ describe('Plugin', () => {
 
     plugin.optimize({data: content, path: ''})
       .then(data => {
-        expect(data).to.equal(expected);
+        expect(data).to.eql({data: expected});
         done();
       })
       .catch(error => expect(error).not.to.be.ok);
@@ -42,7 +42,7 @@ describe('Plugin', () => {
 
     plugin.optimize({data: content, path: ''})
       .then(data => {
-        expect(data).to.equal(expected);
+        expect(data).to.eql({data: expected});
         done();
       })
       .catch(error => expect(error).not.to.be.ok);
@@ -55,10 +55,11 @@ describe('Plugin', () => {
 
     const content = '#first { font-size: 14px; color: #b0b; }';
     const expected = content;
+    const map = 'someDummyMap';
 
-    plugin.optimize({data: content, path: 'dist/ignore-me.css'})
+    plugin.optimize({data: content, path: 'dist/ignore-me.css', map})
       .then(data => {
-        expect(data).to.equal(expected);
+        expect(data).to.eql({data: expected, map});
         done();
       })
       .catch(error => expect(error).not.to.be.ok);

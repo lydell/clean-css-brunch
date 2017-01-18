@@ -4,26 +4,46 @@ const CleanCSS = require('clean-css');
 
 class CleanCSSMinifier {
   constructor(config) {
-    this.options = config && config.plugins && config.plugins.cleancss || {};
+    if (config == null) config = {};
+    this.config = config;
+    this.options = Object.assign({}, config.plugins && config.plugins.cleancss || {});
   }
 
-  optimize(params) {
-    const data = params.data;
-    const path = params.path;
+  optimize(file) {
+    const data = file.data;
+    const path = file.path;
 
     try {
       if (this.options.ignored && this.options.ignored.test(path)) {
         // ignored file path: return non minified
-        return Promise.resolve(data);
+        const result = {
+          data,
+          // brunch passes in a SourceMapGenerator object, but wants a string back.
+          map: file.map ? file.map.toString() : null,
+        };
+        return Promise.resolve(result);
       }
     } catch (e) {
       return Promise.reject(`error checking ignored files to minify ${e}`);
     }
 
+    if (file.map && this.config.sourceMaps) {
+      this.options.sourceMap = file.map.toString();
+    }
+
     try {
-      return Promise.resolve(new CleanCSS(this.options).minify(data).styles || data);
-    } catch (error) {
-      return Promise.reject(`CSS minify failed on ${path}: ${error}`);
+      const optimized = new CleanCSS(this.options).minify(data);
+
+      const result = optimized && this.config.sourceMaps ? {
+        data: optimized.styles,
+        map: optimized.sourceMap.toString(),
+      } : {
+        data: optimized.styles,
+      };
+
+      return Promise.resolve(result);
+    } catch (err) {
+      return Promise.reject(`CSS minification failed on ${path}: ${err}`);
     }
   }
 }
